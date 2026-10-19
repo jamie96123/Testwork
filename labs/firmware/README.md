@@ -15,6 +15,8 @@
 | UART RX | PA3 | LPUART1_RX，AF12 | 同上 |
 | 除錯 | PA13/PA14 | Serial Wire | 保留 SWD |
 
+Lab1 附圖的 Morpho CN10 接頭：PC9＝pin 1、PC8＝pin 2、PC6＝pin 4、GND＝pin 20。請以你手上板卡方向與原理圖核對 pin 1，勿從反面倒數。
+
 三顆 LED 為高電位點亮、負極共地。不用實體按鈕，也不用外接 Wi-Fi／USB 通訊模組。PC8、PC9 是 MCU 名稱，不是排針第 8/9 腳；依你的板卡原理圖確認對應排針。不要把 5V 接到 GPIO。
 
 ## 2. 用 CubeMX 設定，不手寫生成函式

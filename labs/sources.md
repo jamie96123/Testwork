@@ -6,7 +6,7 @@
 
 | 來源 | 投影片 | 本版使用方式 |
 | --- | --- | --- |
-| Lab1 | 4、10、21、23、27 | NUCLEO-G474RE、HAL、CubeMX 設定腳位、保留生成程式、LED 限流 |
+| Lab1 | 4、10、21、23、27 | NUCLEO-G474RE、HAL、CubeMX 設定腳位、保留生成程式、LED 限流；Lab1 CN10 附圖核對 PC9/1、PC8/2、PC6/4、GND/20 |
 | Lab2 | 5、7–11、24–25 | 區分輪詢與中斷、中斷不可長時間等待；不需要實體按鈕，因此不設定 EXTI |
 | Lab3 | 4、6、8–9、14 | 狀態變數、HAL_GetTick 非阻塞計時、切換模式重設時間；板子不使用 enum／typedef 管理狀態 |
 | Lab4_UART | 4–5、9–13、15–20 | ST-LINK VCP、LPUART1 PA2/PA3、115200/8N1、LF/CR、未知／超長行、FIFO 及溢位復原 |
