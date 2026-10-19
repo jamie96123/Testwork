@@ -1,0 +1,8 @@
+/* Core/Src/stm32g4xx_it.c: add next to the includes */
+extern UART_HandleTypeDef typerush_uart;
+
+/* Keep exactly one definition of this IRQ handler. */
+void LPUART1_IRQHandler(void)
+{
+    HAL_UART_IRQHandler(&typerush_uart);
+}
