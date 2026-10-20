@@ -9,8 +9,7 @@ export class SerialLink {
    this.reader=this.port.readable.getReader();this.writer=this.port.writable.getWriter();
    this.readTask=this.read();
    this.status('handshake');
-   await this.command('HELLO');
-   this.ready=true;this.status('ready');
+   await this.verify();
   }catch(error){await this.close();throw error;}
  }
  command(text){
@@ -18,7 +17,7 @@ export class SerialLink {
   const run=async()=>{
    if(!this.writer||generation!==this.generation)throw Error('序列埠已關閉。');
    let timer;
-   const confirmation=new Promise((resolve,reject)=>{this.pending={text,resolve,reject};timer=setTimeout(()=>reject(Error(`板子未確認 ${text}，請檢查新版韌體或按 RESET。`)),1500);});
+   const confirmation=new Promise((resolve,reject)=>{this.pending={text,resolve,reject};timer=setTimeout(()=>{const error=Error(`板子未確認 ${text}。序列埠仍開啟，請按板子 RESET 查看接收紀錄，再按重新確認。`);error.code='ACK_TIMEOUT';reject(error);},3000);});
    // 先註冊拒絕處理，避免寫入尚未完成時產生未處理的拒絕。
    confirmation.catch(()=>{});
    try{this.log('→ '+text);await this.writer.write(new TextEncoder().encode(text+'\n'));await confirmation;}
@@ -26,8 +25,13 @@ export class SerialLink {
   };
   const result=this.queue.then(run);this.queue=result.catch(()=>{});return result;
  }
+ async verify(){
+  try{await this.command('HELLO');this.ready=true;this.status('ready');return true;}
+  catch(error){if(error.code==='ACK_TIMEOUT'&&this.reader&&this.writer&&!this.closing){this.ready=false;this.status('waiting',error.message);return false;}throw error;}
+ }
  async read(){const decoder=new TextDecoder();let buffer='';
   try{while(true){const {value,done}=await this.reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let split;while((split=buffer.indexOf('\n'))>=0){const line=buffer.slice(0,split).trim();buffer=buffer.slice(split+1);this.log('← '+line);
+   if(line==='HELLO WORLD'&&!this.ready)this.status('boot');
    if(line===`OK ${this.pending?.text}`)this.pending.resolve();
    else if(line.startsWith('ERR ')){const error=Error('板子回報：'+line);this.pending?.reject(error);this.status('error',error.message);}
   }if(buffer.length>1024)throw Error('收到過長序列資料。');}}

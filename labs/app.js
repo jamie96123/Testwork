@@ -5,10 +5,12 @@ const game=new Game();
 let manual=null, lastRound=0, desiredKey='', revision=0, syncing=false, syncingPromise;
 const log=text=>{const el=$('log');el.textContent=(el.textContent+'\n'+new Date().toLocaleTimeString()+' '+text).split('\n').slice(-100).join('\n');el.scrollTop=el.scrollHeight;};
 const link=new SerialLink({log,status(type,message){
- if(type==='ready'){$('connection-label').textContent='STM32 已確認連線';$('connection-detail').textContent='LPUART1 · 115200 / 8N1 · 新版教材韌體';$('connection-dot').classList.add('connected');$('connect').hidden=true;$('disconnect').hidden=false;desiredKey='';render();}
+ if(type==='ready'){$('retry').hidden=true;$('connection-label').textContent='STM32 已確認連線';$('connection-detail').textContent='LPUART1 · 115200 / 8N1 · 新版教材韌體';$('connection-dot').classList.add('connected');$('connect').hidden=true;$('disconnect').hidden=false;desiredKey='';render();}
+ if(type==='waiting'){$('connection-label').textContent='序列埠已開啟，韌體尚未確認';$('connection-detail').textContent=message;$('connect').hidden=true;$('disconnect').hidden=false;$('retry').hidden=false;$('connection-dot').classList.remove('connected');document.querySelector('.console').open=true;}
+ if(type==='boot'){$('connection-detail').textContent='已收到 HELLO WORLD：板子 → 電腦正常。請按「重新確認」檢查另一方向。';}
  if(type==='handshake'){$('connection-label').textContent='序列埠已開啟，確認韌體中…';}
  if(type==='error'){$('hardware-status').textContent=message;$('connection-label').textContent='板子通訊異常';$('connection-dot').classList.remove('connected');}
- if(type==='closed'){$('connection-label').textContent='模擬模式';$('connection-detail').textContent='序列埠已關閉，遊戲可繼續；實體燈光狀態未確認。';$('connection-dot').classList.remove('connected');$('connect').hidden=false;$('connect').disabled=false;$('disconnect').hidden=true;$('lamp-source').textContent='● SIMULATED';$('hardware-status').textContent='目前僅顯示模擬燈光；若板子斷線，請按 RESET 關燈。';desiredKey='';}
+ if(type==='closed'){$('retry').hidden=true;$('connection-label').textContent='模擬模式';$('connection-detail').textContent='序列埠已關閉，遊戲可繼續；實體燈光狀態未確認。';$('connection-dot').classList.remove('connected');$('connect').hidden=false;$('connect').disabled=false;$('disconnect').hidden=true;$('lamp-source').textContent='● SIMULATED';$('hardware-status').textContent='目前僅顯示模擬燈光；若板子斷線，請按 RESET 關燈。';desiredKey='';}
 }});
 function lightState(){const color=manual??game.color;return {color,breathe:color==='green'&&$('breathe').checked&&game.state!=='paused'};}
 function showLight({color,breathe}){document.querySelectorAll('.lamp').forEach(el=>el.classList.toggle('active',el.dataset.color===color));const traffic=document.querySelector('.traffic');traffic.classList.toggle('breathing',breathe);traffic.setAttribute('aria-label',color==='off'?'目前燈光全關':`${{green:'綠',yellow:'黃',red:'紅'}[color]}燈${breathe?'呼吸':'恆亮'}`);}
@@ -29,6 +31,7 @@ setInterval(()=>{if(game.state==='running'){game.update();render();}},50);
 document.querySelectorAll('[data-light]').forEach(button=>button.onclick=()=>{if(game.state==='running')return;manual=button.dataset.light;render();});
 $('breathe').onchange=()=>{render();};
 $('connect').onclick=async()=>{$('connect').disabled=true;try{await link.connect();}catch(error){$('connection-label').textContent='無法完成連線';$('connection-detail').textContent=error.message;log(error.message);$('connect').disabled=false;}};
+$('retry').onclick=async()=>{$('retry').disabled=true;try{await link.verify();}catch(error){$('connection-detail').textContent=error.message;log(error.message);}finally{$('retry').disabled=false;}};
 $('disconnect').onclick=async()=>{$('disconnect').disabled=true;try{manual='off';syncLight();await syncingPromise;await link.close();manual=null;render();}finally{$('disconnect').disabled=false;}};
 $('clear-log').onclick=()=>{$('log').textContent='紀錄已清除。';};
 // 切換分頁時凍結遊戲，避免背景分頁計時節流導致題目跳過。
